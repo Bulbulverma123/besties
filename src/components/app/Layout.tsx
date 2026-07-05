@@ -9,14 +9,19 @@ import {v4 as uuid} from  'uuid'
 import useSWR, { mutate } from "swr"
 import Fetcher from "../../lib/Fetcher"
 import CatchError from "../../lib/CatchError"
-import FriendSuggestion from "./FriendSuggestion"
-import FriendRequest from "./FriendRequest"
+import FriendsSuggestion from "./friend/FriendSuggestion"
+import FriendsRequest from "./friend/FriendsRequest"
+import FriendsList from "./friend/FriendsList"
+import { useMediaQuery } from 'react-responsive'
+import Logo from "../shared/Logo"
+import IconButton from "../shared/IconButton"
 const EightMinuteInMs = 8*60*1000
 
 const Layout = () =>{
-    const [leftAsideSize, setLeftAsideSize] = useState(350)
+    const isMobile = useMediaQuery({ query: '(max-width: 1224px)' })
+    const [leftAsideSize, setLeftAsideSize] = useState(0)
     const rightAsideSize = 450
-    const collapsseSize = 140
+    const [collapsseSize, setCollapseSize ]= useState(0)
     const {pathname} = useLocation()
     const navigate = useNavigate()
     const {error} = useSWR('/auth/refresh-token', Fetcher, {
@@ -24,12 +29,27 @@ const Layout = () =>{
         shouldRetryOnError: false
     })
 
+     const friendsUiBlackList = [
+         "/app/friends",
+         "/app/chat",
+         "/app/audio-chat",
+          "/app/video-chat",
+    ]
+
+   const isBlackListed = friendsUiBlackList.some((path)=> path === pathname)
+
      useEffect(()=>{
         if(error) 
         {
             logout()
         }
      }, [error])
+
+    
+     useEffect(()=>{
+        setLeftAsideSize(isMobile ? 0 : 350 )
+        setCollapseSize(isMobile ? 0 : 140)
+     }, [isMobile])
 
     const {session, setSession} = useContext(Context)
 
@@ -110,13 +130,23 @@ const getPathname =(path: string) =>{
  
     return (
         <div className=" min-h-screen">
-            <aside 
-             className="bg-white fixed top-0 left-0 h-full  p-8 overflow-auto " 
+             <nav className="lg:hidden flex justify-between items-center bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900 sticky top-0 left-0 z-[20000] w-full py-4 px-6">
+                  <Logo />
+                  <div className="flex gap-4">
+                    <IconButton onClick={logout} icon="logout-circle-line" type="success" />
+                    <Link to="/app/friends">
+                      <IconButton icon="chat-ai-line" type="danger" />
+                    </Link>
+                    <IconButton onClick={()=> setLeftAsideSize(leftAsideSize === 250 ?collapsseSize : 250)} icon="menu-3-line" type="warning" />
+                  </div>
+            </nav > 
+          <aside 
+             className="bg-white fixed top-0 left-0 h-full lg:p-8 overflow-auto z-[20000] " 
              style={{
                 width:  leftAsideSize ,
                 transition: "0.2s"
             }}>
-            <div className="space-y-8 h-full rounded-2xl p-8  bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900" >
+            <div className="space-y-8 h-full lg:rounded-2xl p-8  bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900" >
                   {
                     leftAsideSize === collapsseSize ?
                      <i className="ri-user-fill text-xl text-white animate__animated animate__fadeIn"></i>
@@ -161,17 +191,24 @@ const getPathname =(path: string) =>{
              </div>
             </aside>
 
-            <section className="  py-8  px-1 " 
-            style={{
-                 width:  `calc(100% - ${leftAsideSize+rightAsideSize}px)` ,
-                 marginLeft: leftAsideSize,
+        <section 
+             className="lg:py-8  lg:px-1 p-6 space-y-8" 
+             style={{
+                 width: isMobile ? '100%' :  `calc(100% - ${leftAsideSize+rightAsideSize}px)` ,
+                 marginLeft: isMobile ? 0 : leftAsideSize,
                  transition: "0.2s"
               }}
-           >
-               
-                <Card  title={
+              >
+                
+
+             {
+                  !isBlackListed &&
+                   <FriendsRequest />
+              }
+                <Card 
+                  title={
                     <div className="flex gap-4 items-center">
-                         <button className="bg-gray-100 w-10 h-10 rounded-full hover:bg-slate-200" onClick={()=> setLeftAsideSize(leftAsideSize === 350 ?collapsseSize : 350)}>
+                         <button className="lg:block hidden bg-gray-100 w-10 h-10 rounded-full hover:bg-slate-200" onClick={()=> setLeftAsideSize(leftAsideSize === 350 ?collapsseSize : 350)}>
                             <i className="ri-arrow-left-line"></i>
                          </button>
                          <h1>{getPathname(pathname)}</h1>
@@ -187,65 +224,31 @@ const getPathname =(path: string) =>{
                     }
                 
                 </Card>
+                {
+                  !isBlackListed &&
+                       <FriendsSuggestion />
+                 }
+               
             </section>
 
             <aside
-            className= "bg-white  fixed top-0 right-0 h-full  p-8 overflow-auto space-y-8"
-            style={{
-                width: rightAsideSize,
-                transition: "0.2s"
-            }}>
+                 className= "lg:block hidden bg-white  fixed top-0 right-0 h-full  p-8 overflow-auto space-y-8"
+                 style={{
+                     width: rightAsideSize,
+                     transition: "0.2s"
+                 }}>
+                    {
+                      !isBlackListed &&
+                         <Card title=" Friends" divider >
+                            <FriendsList  gap={6} columns={2}/>
+                         </Card>
+                    }
+                   <Card title="Recent posts" divider>
 
-        
-            <FriendSuggestion />
-             <FriendRequest />
-                    <Card title=" Friends" divider >
-                    <div className="space-y-5 " >
-                        {
-                            Array(20).fill(0).map((item, index)=>(
-                              <div key={index} className=" bg-gray-50 p-3 rounded-lg flex justify-between">
-                                 <Avtar
-                                size="md"
-                                image="/images/avtar.jpg"
-                                title="Saurav Kumar"
-                                subtitle={
-                                  <small className={ `${index %2 ===0 ? 'text-zinc-500' : 'text-green-600'} font-medium`}>
-                                    {index %2 ===0 ? 'Offline' : 'Online'}
-                                  </small>
-                                }
-                             />
-                             <div className="space-x-3">
-                                
-                                <Link to="/app/chat">
-                                    <button className="hover:text-blue-600 text-blue-500" title="chat">
-                                        <i className="ri-chat-ai-line"></i>
-                                    </button>
-                                </Link>
-                                
-                                
-                                <Link to="/app/audio-chat">
-                                     <button className="hover:text-green-600 text-green-400" title="call">
-                                       <i className="ri-phone-line"></i>
-                                     </button>
-                                </Link>
-                                
-
-                                <Link to="/app/video-chat" >
-                                <button className="hover:text-amber-600 text-amber-500" title="video call">
-                                    <i className="ri-video-on-ai-line"></i>
-                                </button>
-                                </Link>
-                                
-                            </div>
-                         </div>
-            ))
-                        }
-                    </div>
-                  </Card>
+                   </Card>
+           
             </aside>
-            
-            
-        </div>
+         </div>
     )
 }
 export default Layout

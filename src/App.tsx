@@ -8,7 +8,6 @@ import Signup from './components/Signup'
 import Layout from './components/app/Layout'
 import Dashboard from './components/app/Dashboard'
 import Post from './components/app/Post'
-import Friends from './components/app/Friends'
 import Video from './components/app/Video'
 import Audio from './components/app/Audio'
 import Chat from './components/app/Chat';
@@ -18,6 +17,7 @@ import {useState} from 'react'
 import { ToastContainer } from 'react-toastify';
 import AuthGaurd from './guards/AuthGaurd';
 import RedirectGard from './guards/RedirectGard';
+import FriendsList from './components/app/friend/FriendsList';
 
 const App  =  () =>{
 
@@ -36,7 +36,7 @@ const App  =  () =>{
          <Route path="/app" element={<Layout/>} >
          <Route path="dashboard" element={<Dashboard/>} />
          <Route path="my-posts" element={<Post/>} />
-         <Route  path="friends" element={<Friends/>} />
+         <Route  path="friends" element={<FriendsList/>} />
          <Route  path="video-chat" element={<Video/>} />
          <Route  path="audio-chat" element={<Audio/>} />
          <Route  path="chat" element={<Chat/>} />
