@@ -5,6 +5,7 @@
   height: 100%;
 }
 
+
 .swiper-slide {
   text-align: center;
   font-size: 18px;
@@ -14,4 +15,13 @@
   align-items: center;
 }
 
+.capitalize-first::first-letter {
+  text-transform: uppercase;
+}
 
+.hard-reset p,
+.hard-reset h2,
+.hard-reset h3,
+.hard-reset h4 {
+  all: revert
+}

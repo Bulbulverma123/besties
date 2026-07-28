@@ -25,11 +25,11 @@ const Login = () => {
  
  
   return (
-    <div className="bg-gray-100 flex items-center justify-center h-screen">
-        <div className="w-6/12 animate__animated animate__fadeIn">
+    <div className="bg-gray-100 flex lg:items-center items-end justify-center h-screen">
+        <div className="lg:w-6/12 animate__animated animate__fadeIn">
           <Card noPadding>
-            <div className="grid grid-cols-2">
-                <div className="p-8 space-y-6">
+            <div className="grid lg:grid-cols-2">
+                <div className="p-8 space-y-6 lg:order-1 order-2">
                   <div>
                     <h1 className="text-xl font-bold text-black">SIGN In  </h1>
                     <p className="text-gray-500">Start your first chat now !</p>
@@ -57,12 +57,12 @@ const Login = () => {
                   </div>
 
                 </div>
-                <div className="overflow-hidden h-[500px]  bg-linear-to-t from-sky-500 to-indigo-500  flex items-center justify-center rounded-r-xl">
-                  <img src="/images/login.svg" alt="auth" className="w-[70%] animate__animated animate__slideInUp animate__faster"/>
+                <div className="lg:order-2 order-1 overflow-hidden h-[500px]  bg-linear-to-t from-sky-500 to-indigo-500  flex items-center justify-center rounded-r-xl">
+                  <img src="/images/login.svg" alt="auth" className="lg:w-[70%] w-full lg:h-auto h-[180px] object-cover animate__animated animate__slideInUp animate__faster"/>
 
                 </div>
             
-            <Button >Click me </Button>
+            
            </div>
           </Card>
         </div>

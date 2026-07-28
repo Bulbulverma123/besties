@@ -22,9 +22,11 @@ import FriendsList from './components/app/friend/FriendsList';
 const App  =  () =>{
 
   const [session, setSession] = useState(null)
+  const [liveActiveSession, setLiveActiveSession] = useState(null)
+  const [sdp, setSdp] = useState(null)
  
   return (
-    <Context.Provider value={{session, setSession}}>
+    <Context.Provider value={{session, setSession, liveActiveSession, setLiveActiveSession, sdp, setSdp}}>
     <BrowserRouter>
       <Routes>
        <Route path="/" element={<Home />} />
@@ -37,9 +39,9 @@ const App  =  () =>{
          <Route path="dashboard" element={<Dashboard/>} />
          <Route path="my-posts" element={<Post/>} />
          <Route  path="friends" element={<FriendsList/>} />
-         <Route  path="video-chat" element={<Video/>} />
-         <Route  path="audio-chat" element={<Audio/>} />
-         <Route  path="chat" element={<Chat/>} />
+         <Route  path="video-chat/:id" element={<Video/>} />
+         <Route  path="audio-chat/:id" element={<Audio/>} />
+         <Route  path="chat/:id" element={<Chat/>} />
       </Route>
     </Route>
       <Route  path="*" element={<NotFound/>} />
