@@ -143,7 +143,7 @@ const Chat = () => {
             message: filename,
           }
 
-         setChats((prev: any) => [{...attachmentPayload , ...localMetaData}])
+         setChats((prev: any) => [...prev,{...attachmentPayload , ...localMetaData}])
          socket.emit("attachment", {...attachmentPayload, ...remoteMetaData})
            
          

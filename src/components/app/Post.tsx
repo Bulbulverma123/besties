@@ -18,7 +18,7 @@ interface FIleDataInterFace {
 }
 
 const Post = () => {
-  const { data, error, isLoading } = useSWR('/post', Fetcher)
+  const { data, isLoading } = useSWR('/post', Fetcher)
   const [value, setValue] = useState('')
   const [fileData, setFileData] = useState<FIleDataInterFace | null>(null)
 
