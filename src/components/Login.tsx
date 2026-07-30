@@ -13,8 +13,11 @@ const Login = () => {
  const login = async (values: FormDataType) =>{
   try{
     
-     await HttpInterceptor.post("/auth/login", values)
-    navigate("/app")
+     const { data } = await HttpInterceptor.post("/auth/login", values)
+     if (data?.accessToken) {
+       localStorage.setItem("accessToken", data.accessToken)
+     }
+     navigate("/app")
   }
   catch(err: unknown)
   {

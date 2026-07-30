@@ -34,28 +34,29 @@ const FriendsOnline = () => {
     <Card title="online friends" divider>
       <div className="space-y-6">
         {
-          session && onlineUsers.filter((item: any) => item.id !== session.id).map((item: any, index) => (
-            <div key={index} className="flex">
-              <div>
-                <img src="/images/avtar.jpg" className="w-12 h-12 rounded-full object-cover" />
-                <div>
-                  <h1 className="font-medium mb-1 capitalize">{item.fullname}</h1>
-                  <div className="flex items-center gap-3">
-                    <label className={`capitalize-first text-[10px] font-medium text-green-400`}>Online</label>
+          session && onlineUsers.filter((item: any) => String(item.id) !== String(session.id)).map((item: any, index) => (
+            <div key={index} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-all border border-transparent hover:border-slate-100">
+              <img src={item.image || "/images/avtar.jpg"} className="w-11 h-11 rounded-full object-cover border border-indigo-100 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h1 className="font-medium text-sm text-gray-800 truncate capitalize">{item.fullname}</h1>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-500">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Online
+                  </span>
 
-                    <button className="hover:cursor-pointer" onClick={() => generateActiveSession(`/app/chat/${item.id}`, item)}>
-                      <i className="ri-chat-ai-line text-rose-400"></i>
+                  <div className="flex items-center gap-2.5">
+                    <button title="Chat" className="hover:scale-110 transition-transform hover:cursor-pointer p-1" onClick={() => generateActiveSession(`/app/chat/${item.id}`, item)}>
+                      <i className="ri-chat-ai-line text-rose-500 text-lg"></i>
                     </button>
 
-                    <button className="hover:cursor-pointer" onClick={() => generateActiveSession(`/app/audio-chat/${item.id}`, item)}>
-                      <i className="ri-phone-line text-amber-400"></i>
+                    <button title="Audio Call" className="hover:scale-110 transition-transform hover:cursor-pointer p-1" onClick={() => generateActiveSession(`/app/audio-chat/${item.id}`, item)}>
+                      <i className="ri-phone-line text-amber-500 text-lg"></i>
                     </button>
 
-
-                    <button className="hover:cursor-pointer" onClick={() => generateActiveSession(`/app/video-chat/${item.id}`,item)}>
-                      <i className="ri-video-on-ai-line text-green-400"></i>
+                    <button title="Video Call" className="hover:scale-110 transition-transform hover:cursor-pointer p-1" onClick={() => generateActiveSession(`/app/video-chat/${item.id}`, item)}>
+                      <i className="ri-video-on-ai-line text-emerald-500 text-lg"></i>
                     </button>
-
                   </div>
                 </div>
               </div>
