@@ -11,7 +11,7 @@ import useSWR from "swr"
 import Fetcher from "../../lib/Fetcher"
 import CatchError from "../../lib/CatchError"
 import HttpInterceptor from "../../lib/HttpInterceptor"
-import axios from 'axios'
+import { uploadFileToStorage } from "../../lib/upload"
 import { v4 as uuid } from 'uuid'
 import Card from "../shared/Card"
 import moment from 'moment'
@@ -111,18 +111,7 @@ const Chat = () => {
          const filename = `${uuid()}.${ext}`
          const path = `chats/${filename}`
 
-         const payload = {
-            path,
-            type: file.type,
-            status: "private"
-         }
-         const options = {
-            headers: {
-               'Content-Type': file.type
-            }
-         }
-         const { data } = await HttpInterceptor.post("/storage/upload", payload)
-         await axios.put(data.url, file, options)
+         await uploadFileToStorage(file, path, "private")
 
           const remoteMetaData = {
              file: {

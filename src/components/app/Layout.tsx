@@ -5,7 +5,7 @@ import { useContext, useEffect, useRef, useState } from "react"
 import Dashboard from "./Dashboard"
 import Context from "../../Context"
 import HttpInterceptor from "../../lib/HttpInterceptor"
-import axios from 'axios'
+import { uploadFileToStorage } from "../../lib/upload"
 import { v4 as uuid } from 'uuid'
 import useSWR, { mutate } from "swr"
 import Fetcher from "../../lib/Fetcher"
@@ -196,20 +196,8 @@ const Layout = () => {
       const file = input.files[0]
       const path = `profile-pictures/${uuid()}.png`
 
-      const payload = {
-        path,
-        type: file.type,
-        status: "public-read"
-      }
-
       try {
-        const options = {
-          headers: {
-            'Content-Type': file.type
-          }
-        }
-        const { data } = await HttpInterceptor.post("/storage/upload", payload)
-        await axios.put(data.url, file, options)
+        await uploadFileToStorage(file, path, "public-read")
         const { data: user } = await HttpInterceptor.put("/auth/profile-picture", { path })
         setSession({ ...session, image: user.image })
         mutate('/auth/refresh-token')

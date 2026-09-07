@@ -6,8 +6,8 @@ import { Card as AntCard, message, Skeleton } from 'antd'
 import Divider from "../shared/Divider"
 import Editor from "../shared/Editor"
 import HttpInterceptor from "../../lib/HttpInterceptor"
-import axios from 'axios'
 import { v4 as uuid } from 'uuid'
+import { uploadFileToStorage } from "../../lib/upload"
 import CatchError from "../../lib/CatchError"
 import moment from "moment"
 import useSWR, { mutate } from "swr"
@@ -48,19 +48,7 @@ const Post = () => {
         const ext = fileData.file.name.split(".").pop()
         const filename = `${uuid()}.${ext}`
         path = `posts/${filename}`
-        const payload = {
-          path: path,
-          status: 'public-read',
-          type: fileData.file.type
-        }
-        const options = {
-          headers: {
-            'Content-Type': fileData.file.type
-          }
-        }
-        const { data } = await HttpInterceptor.post('/storage/upload', payload)
-        await axios.put(data.url, fileData.file, options)
-
+        await uploadFileToStorage(fileData.file, path, 'public-read')
       }
 
       const formData = {
