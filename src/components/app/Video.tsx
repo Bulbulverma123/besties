@@ -58,6 +58,7 @@ const Video = () => {
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const rtc = useRef<RTCPeerConnection | null>(null)
+  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([])
 
   const [isVideoSharing, setIsVideoSharing] = useState(false)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
@@ -228,10 +229,28 @@ const Video = () => {
     }
   }
 
+  const processQueuedCandidates = async () => {
+    if (!rtc.current || !rtc.current.remoteDescription) return
+    while (iceCandidatesQueue.current.length > 0) {
+      const cand = iceCandidatesQueue.current.shift()
+      if (cand) {
+        try {
+          await rtc.current.addIceCandidate(new RTCIceCandidate(cand))
+        } catch (err) {
+          console.warn("Error adding queued ICE candidate:", err)
+        }
+      }
+    }
+  }
+
   const webRtcConnection = async () => {
     let iceServers = [
       { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" }
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun.services.mozilla.com" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
     ]
     try {
       const { data } = await HttpInterceptor.get("/twilio/turn-server")
@@ -260,7 +279,7 @@ const Video = () => {
     rtc.current.onconnectionstatechange = () => {
       console.log("RTC State:", rtc.current?.connectionState)
       const state = rtc.current?.connectionState
-      if (state === "disconnected" || state === "failed" || state === "closed") {
+      if (state === "failed" || state === "closed") {
         onEndCallRemote()
       }
     }
@@ -272,9 +291,15 @@ const Video = () => {
       if (!remoteVideo)
         return
 
-      remoteVideo.srcObject = remoteStream
-      remoteVideo.style.display = "block"
-      remoteVideo.play().catch((err) => console.log("Remote video play error:", err))
+      if (remoteVideo.srcObject !== remoteStream) {
+        remoteVideo.srcObject = remoteStream
+        remoteVideo.style.display = "block"
+        remoteVideo.play().catch((err) => {
+          if (err.name !== "AbortError") {
+            console.log("Remote video play error:", err)
+          }
+        })
+      }
 
       const videoTracks = remoteStream.getVideoTracks()[0]
       if (videoTracks) {
@@ -339,6 +364,7 @@ const Video = () => {
 
       const offer = new RTCSessionDescription(payload.offer)
       await rtc.current.setRemoteDescription(offer)
+      await processQueuedCandidates()
 
       const answer = await rtc.current.createAnswer()
       await rtc.current.setLocalDescription(answer)
@@ -409,11 +435,12 @@ const Video = () => {
   //connect both uers via webrtc
   const onCandidate = async (payload: OnCandidateInterface) => {
     try {
-      if (!rtc.current || !payload.candidate)
+      if (!payload.candidate)
         return
 
-      if (!rtc.current.remoteDescription) {
-        console.warn("Remote description not set yet, ignoring candidate")
+      if (!rtc.current || !rtc.current.remoteDescription) {
+        console.log("Remote description not set yet, queuing candidate")
+        iceCandidatesQueue.current.push(payload.candidate)
         return
       }
 
@@ -437,6 +464,7 @@ const Video = () => {
 
       const answer = new RTCSessionDescription(payload.answer)
       await rtc.current.setRemoteDescription(answer)
+      await processQueuedCandidates()
 
       setStatus("talking")
       stopAudio()

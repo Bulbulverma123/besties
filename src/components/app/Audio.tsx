@@ -19,6 +19,7 @@ const AudioChat = () => {
   const remoteAudio = useRef<HTMLAudioElement | null>(null)
   const localStream = useRef<MediaStream | null>(null)
   const rtc = useRef<RTCPeerConnection | null>(null)
+  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([])
   const [notify, notifyUi] = notification.useNotification();
   const [status, setStatus] = useState<CallType>('pending')
   const [open, setOpen] = useState(false)
@@ -48,10 +49,28 @@ const AudioChat = () => {
   }
 }
 
+  const processQueuedCandidates = async () => {
+    if (!rtc.current || !rtc.current.remoteDescription) return
+    while (iceCandidatesQueue.current.length > 0) {
+      const cand = iceCandidatesQueue.current.shift()
+      if (cand) {
+        try {
+          await rtc.current.addIceCandidate(new RTCIceCandidate(cand))
+        } catch (err) {
+          console.warn("Error adding queued audio ICE candidate:", err)
+        }
+      }
+    }
+  }
+
   const connection = async () => {
     let iceServers = [
       { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" }
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun.services.mozilla.com" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
     ]
     try {
       const { data } = await HttpInterceptor.get("/twilio/turn-server")
@@ -81,7 +100,7 @@ const AudioChat = () => {
       rtc.current.onconnectionstatechange = () => {
         console.log("Audio RTC state:", rtc.current?.connectionState)
         const state = rtc.current?.connectionState
-        if (state === "disconnected" || state === "failed" || state === "closed") {
+        if (state === "failed" || state === "closed") {
           onEndCallRemote()
         }
       }
@@ -151,6 +170,7 @@ const AudioChat = () => {
 
       const offer = new RTCSessionDescription(payload.offer)
       await rtc.current.setRemoteDescription(offer)
+      await processQueuedCandidates()
 
       const answer = await rtc.current.createAnswer()
       await rtc.current.setLocalDescription(answer)
@@ -232,6 +252,7 @@ const AudioChat = () => {
       }
       const answer = new RTCSessionDescription(payload.answer)
       await rtc.current.setRemoteDescription(answer)
+      await processQueuedCandidates()
 
       setStatus('talking')
       stopAudio()
@@ -251,11 +272,12 @@ const AudioChat = () => {
   }
   const onCandidate = async (payload: OnCandidateInterface) => {
     try {
-      if (!rtc.current || !payload.candidate)
+      if (!payload.candidate)
         return
 
-      if (!rtc.current.remoteDescription) {
-        console.warn("Remote description not set yet for audio candidate")
+      if (!rtc.current || !rtc.current.remoteDescription) {
+        console.log("Remote description not set yet for audio candidate, queuing")
+        iceCandidatesQueue.current.push(payload.candidate)
         return
       }
 
