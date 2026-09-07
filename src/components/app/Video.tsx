@@ -48,7 +48,7 @@ const Video = () => {
   const isMobileDevice = useMediaQuery({ query: '(max-width: 768px)' }) || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const { session, liveActiveSession , sdp, setSdp} = useContext(Context)
+  const { session, liveActiveSession, sdp, setSdp, playAudio, stopAudio } = useContext(Context)
   const { id } = useParams()
   const [notify, notifyUi] = notification.useNotification()
 
@@ -58,36 +58,12 @@ const Video = () => {
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const rtc = useRef<RTCPeerConnection | null>(null)
-  const audio = useRef<HTMLAudioElement | null>(null)
 
   const [isVideoSharing, setIsVideoSharing] = useState(false)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [isMic, setIsMic] = useState(false)
   const [status, setStatus] = useState<CallType>("pending")
   const [timer, setTimer] = useState(0)
-
-
-  const stopAudio = () => {
-    if (!audio.current)
-      return
-
-    const player = audio.current
-    player.pause()
-    player.currentTime = 0
-  }
-
-  const playAudio = (src: AudioSrcType, loop: boolean = false) => {
-    stopAudio()
-
-    if (!audio.current)
-      audio.current = new Audio()
-
-    const player = audio.current
-    player.src = src
-    player.loop = loop
-    player.load()
-    player.play().catch((err) => console.log("Audio play prevented:", err))
-  }
 
   const toggleScreen = async () => {
     try {
@@ -290,29 +266,28 @@ const Video = () => {
     }
 
     rtc.current.ontrack = (e) => {
-      const remoteStream = e.streams[0]
+      const remoteStream = e.streams[0] || new MediaStream([e.track])
       const remoteVideo = remoteVideoRef.current
 
-      if (!remoteStream || !remoteVideo)
+      if (!remoteVideo)
         return
 
       remoteVideo.srcObject = remoteStream
+      remoteVideo.style.display = "block"
       remoteVideo.play().catch((err) => console.log("Remote video play error:", err))
 
       const videoTracks = remoteStream.getVideoTracks()[0]
       if (videoTracks) {
-        videoTracks.onmute = () => {
-          console.log("video off")
-          remoteVideo.style.display = "none"
-        }
-
         videoTracks.onunmute = () => {
-          remoteVideo.style.display = "block"
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.style.display = "block"
+          }
         }
 
         videoTracks.onended = () => {
-          remoteVideo.srcObject = null
-          remoteVideo.style.display = "none"
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null
+          }
         }
       }
     }
@@ -486,6 +461,7 @@ const Video = () => {
 
 
   useEffect(() => {
+    stopAudio()
     toggleVideo()
     socket.on("offer", onOffer)
     socket.on("candidate", onCandidate)
@@ -494,6 +470,7 @@ const Video = () => {
     socket.on("end", onEndCallRemote)
 
     return () => {
+      stopAudio()
       socket.off("offer", onOffer)
       socket.off("candidate", onCandidate)
       socket.off("answer", onAnswer)

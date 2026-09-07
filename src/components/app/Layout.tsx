@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
 import Avtar from "../shared/Avtar"
 import Card from "../shared/Card"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import Dashboard from "./Dashboard"
 import Context from "../../Context"
 import HttpInterceptor from "../../lib/HttpInterceptor"
@@ -17,7 +17,7 @@ import Logo from "../shared/Logo"
 import IconButton from "../shared/IconButton"
 import FriendsOnline from "./friend/FriendsOnline"
 import socket from "../../lib/socket"
-import { AudioSrcType, OnOfferInterface } from "./Video"
+import { OnOfferInterface } from "./Video"
 import { notification, Modal, Button as AntButton } from "antd"
 
 const EightMinuteInMs = 8 * 60 * 1000
@@ -27,34 +27,11 @@ const Layout = () => {
   const [leftAsideSize, setLeftAsideSize] = useState(0)
   const [collapsseSize, setCollapseSize] = useState(0)
   const [photoModalOpen, setPhotoModalOpen] = useState(false)
-  const { liveActiveSession, setLiveActiveSession, setSdp } = useContext(Context)
+  const { liveActiveSession, setLiveActiveSession, setSdp, playAudio, stopAudio } = useContext(Context)
   const { pathname } = useLocation()
   const params = useParams()
   const paramsArray = Object.keys(params)
-  const audio = useRef<HTMLAudioElement | null>(null)
   const [notify, notifyUi] = notification.useNotification()
-
-   const stopAudio = () => {
-      if (!audio.current)
-        return
-  
-      const player = audio.current
-      player.pause()
-      player.currentTime = 0
-    }
-  
-    const playAudio = (src: AudioSrcType, loop: boolean = false) => {
-      stopAudio()
-  
-      if (!audio.current)
-        audio.current = new Audio()
-  
-      const player = audio.current
-      player.src = src
-      player.loop = loop
-      player.load()
-      player.play().catch((err) => console.log("Audio play prevented:", err))
-    }
 
   const navigate = useNavigate()
   const {error} = useSWR('/auth/refresh-token', Fetcher, {
@@ -64,16 +41,8 @@ const Layout = () => {
 
   useEffect(() => {
     const unlockAudio = () => {
-      if (!audio.current) audio.current = new Audio()
-      audio.current.volume = 0
-      audio.current.src = "/sound/ring.mp3"
-      audio.current.play().then(() => {
-        if (audio.current) {
-          audio.current.pause()
-          audio.current.currentTime = 0
-          audio.current.volume = 1
-        }
-      }).catch(() => {})
+      playAudio("/sound/ring.mp3")
+      stopAudio()
       window.removeEventListener("click", unlockAudio)
       window.removeEventListener("touchstart", unlockAudio)
     }

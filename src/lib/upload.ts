@@ -30,11 +30,7 @@ export const uploadFileToStorage = async (file: File, path: string, status: stri
     formData.append("type", file.type)
     formData.append("status", status)
 
-    await HttpInterceptor.post('/storage/upload-direct', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    await HttpInterceptor.post('/storage/upload-direct', formData)
     return path
   }
 }

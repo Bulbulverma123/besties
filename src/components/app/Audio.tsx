@@ -14,36 +14,14 @@ const AudioChat = () => {
   const { id } = useParams()
   const [isMic, setIsMic] = useState(false)
   const navigate = useNavigate()
-  const { session, liveActiveSession, sdp, setSdp } = useContext(Context)
+  const { session, liveActiveSession, sdp, setSdp, playAudio, stopAudio } = useContext(Context)
   const localAudio = useRef<HTMLAudioElement | null>(null)
   const remoteAudio = useRef<HTMLAudioElement | null>(null)
   const localStream = useRef<MediaStream | null>(null)
   const rtc = useRef<RTCPeerConnection | null>(null)
   const [notify, notifyUi] = notification.useNotification();
-  const audio = useRef<HTMLAudioElement | null>(null)
   const [status, setStatus] = useState<CallType>('pending')
   const [open, setOpen] = useState(false)
-
-  const stopAudio = () => {
-    if (!audio.current)
-      return
-
-    audio.current.pause()
-    audio.current.currentTime = 0
-  }
-
-  const playAudio = (src: string, loop: boolean = false) => {
-    stopAudio()
-
-    if (!audio.current)
-      audio.current = new Audio()
-
-    const player = audio.current
-    player.src = src
-    player.loop = loop
-    player.load()
-    player.play().catch((err) => console.log("Audio autoplay prevented:", err))
-  }
 
   const toggleMic = async () => {
   try {
@@ -290,12 +268,14 @@ const AudioChat = () => {
     }
   }
   useEffect(() => {
+    stopAudio()
     socket.on('offer', onOffer)
     socket.on('candidate', onCandidate)
     socket.on('answer', onAnswer)
     socket.on("end", onEndCallRemote)
 
     return () => {
+      stopAudio()
       socket.off('offer', onOffer)
       socket.off('candidate', onCandidate)
       socket.off('answer', onAnswer)
