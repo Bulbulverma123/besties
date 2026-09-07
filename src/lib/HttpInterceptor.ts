@@ -1,12 +1,15 @@
-const env = import.meta.env
 import axios from 'axios'
+
+const rawServer = import.meta.env.VITE_SERVER || 'https://besties-api-unba.onrender.com'
+export const SERVER_URL = rawServer.trim().replace(/\/$/, '')
+
 const HttpInterceptor = axios.create({
-    baseURL: env.VITE_SERVER,
+    baseURL: SERVER_URL,
     withCredentials: true
 })
 
 HttpInterceptor.interceptors.request.use((config) => {
-    const token = localStorage.getItem("accessToken")
+    const token = typeof window !== 'undefined' ? localStorage.getItem("accessToken") : null
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }

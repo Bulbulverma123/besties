@@ -47,8 +47,8 @@ const FriendsRequest = () => {
               <SwiperSlide key={index}>
 
                 <div className='flex flex-col items-center gap-2 border border-gray-100 p-3 rounded-lg'>
-                  <img src="/images/avtar.jpg" className="w-[80px] h-[80px] rounded-full object-cover" />
-                  <h1 className='text-base font-medium text-black capitalize'>{item.user.fullname}</h1>
+                  <img src={item.user?.image || "/images/avtar.jpg"} className="w-[80px] h-[80px] rounded-full object-cover" />
+                  <h1 className='text-base font-medium text-black capitalize truncate max-w-full'>{item.user?.fullname || "User"}</h1>
                   <SmallButton type='warning' icon="check-double-line" onClick={()=>acceptFriend(item._id)}>Accept</SmallButton>
                 </div>
 

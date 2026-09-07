@@ -380,7 +380,7 @@ const Video = () => {
       setStatus("calling")
       playAudio("/sound/ring.mp3", true)
       notify.open({
-        message: <h1 className="capitalize font-medium">{liveActiveSession.fullname}</h1>,
+        message: <h1 className="capitalize font-medium">{liveActiveSession?.fullname || "Friend"}</h1>,
         description: "Calling...",
         duration: 30,
         placement: "bottomRight",
@@ -459,7 +459,7 @@ const Video = () => {
   const onOffer = (payload: OnOfferInterface) => {
     setStatus("incomming")
     notify.open({
-      message: <h1 className='capitalize font-medium'>{payload.from.fullname}</h1>,
+      message: <h1 className='capitalize font-medium'>{payload.from?.fullname || "Friend"}</h1>,
       description: "Incoming call...",
       duration: 30,
       placement: "bottomRight",
@@ -569,12 +569,12 @@ const Video = () => {
 
   return (
     <div className="space-y-8">
-      <div ref={remoteVideoContainerRef} className=" bg-black w-full h-0 relative pb-[56.25%] rounded-xl">
-        <video ref={remoteVideoRef} className="w-full h-full absolute top-0 left-0" autoPlay playsInline> </video>
+      <div ref={remoteVideoContainerRef} className=" bg-black w-full h-0 relative pb-[56.25%] rounded-xl overflow-hidden">
+        <video ref={remoteVideoRef} className="w-full h-full absolute top-0 left-0 object-cover" autoPlay playsInline> </video>
         <button className='absolute bottom-5 left-5 text-xs px-2.5 py-1 rounded-lg text-white' style={{
           background: 'rgba(0,0,0, 0.7)'
         }}>
-          {liveActiveSession.fullname}
+          {liveActiveSession?.fullname || "Remote User"}
         </button>
 
         <button onClick={() => toggleFullScreen("remote")} className='absolute bottom-5 right-5 text-xs px-2.5 py-1 rounded-lg text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 ' style={{
@@ -584,9 +584,9 @@ const Video = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div ref={localVideoContainerRef} className=" bg-black w-full h-0 relative pb-[56.25%] rounded-xl">
-          <video ref={localVideoRef} muted className="w-full h-full absolute top-0 left-0" autoPlay playsInline> </video>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+        <div ref={localVideoContainerRef} className=" bg-black w-full h-0 relative pb-[56.25%] rounded-xl overflow-hidden">
+          <video ref={localVideoRef} muted className="w-full h-full absolute top-0 left-0 object-cover" autoPlay playsInline> </video>
           <button className='capitalize absolute bottom-2 left-2 text-xs px-2.5 py-1 rounded-lg text-white' style={{
             background: 'rgba(0,0,0,0.7)'
           }}>
@@ -598,8 +598,6 @@ const Video = () => {
             <i className="ri-fullscreen-exit-line"></i>
           </button>
         </div>
-        <Button type="primary" icon="user-add-line" >Add</Button>
-
       </div>
 
       <div className=" flex justify-between items-center">

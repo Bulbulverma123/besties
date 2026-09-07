@@ -155,7 +155,7 @@ const AudioChat = () => {
       await rtc.current.setLocalDescription(offer)
 
       notify.open({
-        message: <h1 className='capitalize font-medium'>{liveActiveSession.fullname}</h1>,
+        message: <h1 className='capitalize font-medium'>{liveActiveSession?.fullname || "Friend"}</h1>,
         description: 'Calling...',
         duration: 30,
         placement: 'bottomRight',
@@ -231,7 +231,7 @@ const AudioChat = () => {
   const onOffer = (payload: OnOfferInterface) => {
     try {
       notify.open({
-        message: <h1 className='capitalize font-medium'>{payload.from.fullname}</h1>,
+        message: <h1 className='capitalize font-medium'>{payload.from?.fullname || "Friend"}</h1>,
         description: 'Incomming...',
         duration: 30,
         placement: 'bottomRight',
@@ -319,26 +319,26 @@ const AudioChat = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4">
-        <Card title={session.fullname}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card title={session?.fullname}>
           <audio hidden ref={localAudio} muted playsInline />
           <audio hidden ref={remoteAudio} autoPlay playsInline />
 
           <div className="flex flex-col items-center">
             < img
-              src={session.image || "/images/avtar.jpg"}
+              src={session?.image || "/images/avtar.jpg"}
               alt="avtar"
-              className="w-40 h-40 rounded-full object-cover"
+              className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover"
             />
           </div>
         </Card>
 
-        <Card title={liveActiveSession.fullname}>
+        <Card title={liveActiveSession?.fullname || "Friend"}>
           <div className="flex flex-col items-center">
             < img
-              src={liveActiveSession.image || "/images/avtar.jpg"}
+              src={liveActiveSession?.image || "/images/avtar.jpg"}
               alt="avtar"
-              className="w-40 h-40 rounded-full object-cover"
+              className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover"
             />
           </div>
         </Card>

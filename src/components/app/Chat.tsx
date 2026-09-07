@@ -11,6 +11,7 @@ import useSWR from "swr"
 import Fetcher from "../../lib/Fetcher"
 import CatchError from "../../lib/CatchError"
 import HttpInterceptor from "../../lib/HttpInterceptor"
+import axios from 'axios'
 import { v4 as uuid } from 'uuid'
 import Card from "../shared/Card"
 import moment from 'moment'
@@ -30,12 +31,12 @@ interface AttachmentUiInterface {
 const AttachmentUi: FC<AttachmentUiInterface> = ({ file }) => {
    if (file.type.startsWith("video/"))
       return (
-         <video className="w-full" controls src={file.path}></video>
+         <video className="w-full max-h-60 rounded-lg object-cover" controls src={file.path}></video>
       )
 
    if (file.type.startsWith("image/"))
       return (
-         <img className="w-full" src={file.path} />
+         <img className="w-full max-h-60 rounded-lg object-cover" src={file.path} />
       )
 
    return (
@@ -121,7 +122,7 @@ const Chat = () => {
             }
          }
          const { data } = await HttpInterceptor.post("/storage/upload", payload)
-         await HttpInterceptor.put(data.url, file, options)
+         await axios.put(data.url, file, options)
 
           const remoteMetaData = {
              file: {
@@ -170,7 +171,7 @@ const Chat = () => {
 
    return (
       <div>
-         <div className='h-[450px] overflow-auto space-y-12 pr-6 relative' ref={chatContainer}>
+         <div className='h-[calc(100vh-280px)] min-h-[350px] overflow-auto space-y-6 pr-2 md:pr-4 relative' ref={chatContainer}>
 
             {
                chats.map((item: any, index: number) => (

@@ -6,6 +6,7 @@ import { Card as AntCard, message, Skeleton } from 'antd'
 import Divider from "../shared/Divider"
 import Editor from "../shared/Editor"
 import HttpInterceptor from "../../lib/HttpInterceptor"
+import axios from 'axios'
 import { v4 as uuid } from 'uuid'
 import CatchError from "../../lib/CatchError"
 import moment from "moment"
@@ -58,7 +59,7 @@ const Post = () => {
           }
         }
         const { data } = await HttpInterceptor.post('/storage/upload', payload)
-        await HttpInterceptor.put(data.url, fileData.file, options)
+        await axios.put(data.url, fileData.file, options)
 
       }
 

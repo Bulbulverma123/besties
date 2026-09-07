@@ -1,10 +1,12 @@
-const env = import.meta.env
+import { io } from 'socket.io-client'
+import { SERVER_URL } from './HttpInterceptor'
 
-import {io} from 'socket.io-client'
-const socket = io(env.VITE_SERVER, {
+const socket = io(SERVER_URL, {
     withCredentials: true,
-    auth: {
-        token: typeof window !== 'undefined' ? localStorage.getItem("accessToken") || "" : ""
+    auth: (cb) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem("accessToken") || "" : ""
+        cb({ token })
     }
 })
+
 export default socket

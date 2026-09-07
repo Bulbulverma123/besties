@@ -28,13 +28,13 @@ const Login = () => {
  
  
   return (
-    <div className="bg-gray-100 flex lg:items-center items-end justify-center h-screen">
-        <div className="lg:w-6/12 animate__animated animate__fadeIn">
+    <div className="bg-gray-100 flex items-center justify-center min-h-[100dvh] py-8 px-4">
+        <div className="w-full max-w-md lg:max-w-4xl animate__animated animate__fadeIn">
           <Card noPadding>
             <div className="grid lg:grid-cols-2">
-                <div className="p-8 space-y-6 lg:order-1 order-2">
+                <div className="p-6 md:p-8 space-y-6 lg:order-1 order-2">
                   <div>
-                    <h1 className="text-xl font-bold text-black">SIGN In  </h1>
+                    <h1 className="text-xl font-bold text-black">SIGN IN</h1>
                     <p className="text-gray-500">Start your first chat now !</p>
                   </div>
                   <Form className="space-y-6" onValue={login}>
@@ -42,26 +42,24 @@ const Login = () => {
                     <Input 
                      name="email"
                      placeholder="Email id"
-                    // value= "sohan@gmail.com"
                     />
 
                    <Input 
                      type="password"
                      name="password"
                      placeholder="Password"
-                    // value="sohan@123"
                     />
 
                     <Button type="danger" icon="arrow-right-up-line">Sign in</Button>
                   </Form>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 text-sm md:text-base">
                     <p>Don't have an account ?</p>
-                    <Link to="/signup" className="text-green-400 font-medium hover:underline">Sign up </Link>
+                    <Link to="/signup" className="text-green-500 font-medium hover:underline">Sign up </Link>
                   </div>
 
                 </div>
-                <div className="lg:order-2 order-1 overflow-hidden h-[500px]  bg-linear-to-t from-sky-500 to-indigo-500  flex items-center justify-center rounded-r-xl">
-                  <img src="/images/login.svg" alt="auth" className="lg:w-[70%] w-full lg:h-auto h-[180px] object-cover animate__animated animate__slideInUp animate__faster"/>
+                <div className="lg:order-2 order-1 overflow-hidden lg:h-[500px] h-[160px] bg-gradient-to-t from-sky-500 to-indigo-500 flex items-center justify-center rounded-t-xl lg:rounded-r-xl lg:rounded-tl-none">
+                  <img src="/images/login.svg" alt="auth" className="lg:w-[70%] w-3/4 lg:h-auto h-[140px] object-contain animate__animated animate__slideInUp animate__faster"/>
 
                 </div>
             

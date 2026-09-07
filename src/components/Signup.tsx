@@ -19,11 +19,11 @@ const Signup = () => {
     }
   }
   return (
-    <div className="bg-gray-100 flex items-center justify-center h-screen">
-        <div className="lg:w-6/12 animate__animated animate__fadeIn">
+    <div className="bg-gray-100 flex items-center justify-center min-h-[100dvh] py-8 px-4">
+        <div className="w-full max-w-md lg:max-w-4xl animate__animated animate__fadeIn">
           <Card noPadding>
             <div className="grid lg:grid-cols-2">
-                <div className="p-8 space-y-6 lg:order-1 order-2">
+                <div className="p-6 md:p-8 space-y-6 lg:order-1 order-2">
                   <div>
                     <h1 className="text-xl font-bold text-black">SIGN UP </h1>
                     <p className="text-gray-500">Start your first chat now !</p>
@@ -52,14 +52,14 @@ const Signup = () => {
 
                     <Button type="danger" icon="arrow-right-up-line">Sign up</Button>
                   </Form>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 text-sm md:text-base">
                     <p>Already have an account ?</p>
-                    <Link to="/login" className="text-green-400 font-medium hover:underline">Sign in </Link>
+                    <Link to="/login" className="text-green-500 font-medium hover:underline">Sign in </Link>
                   </div>
 
                 </div>
-                <div className="lg:order-2 order-1 overflow-hidden lg:h-[500px] h-[180px] bg-linear-to-t from-sky-500 to-indigo-500  flex items-center justify-center rounded-r-xl">
-                  <img src="/images/auth.svg" alt="auth" className="w-full animate__animated animate__slideInUp animate__faster"/>
+                <div className="lg:order-2 order-1 overflow-hidden lg:h-[500px] h-[160px] bg-gradient-to-t from-sky-500 to-indigo-500 flex items-center justify-center rounded-t-xl lg:rounded-r-xl lg:rounded-tl-none">
+                  <img src="/images/auth.svg" alt="auth" className="lg:w-[70%] w-3/4 lg:h-auto h-[140px] object-contain animate__animated animate__slideInUp animate__faster"/>
 
                 </div>
             </div>

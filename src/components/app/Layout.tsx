@@ -5,6 +5,7 @@ import { useContext, useEffect, useRef, useState } from "react"
 import Dashboard from "./Dashboard"
 import Context from "../../Context"
 import HttpInterceptor from "../../lib/HttpInterceptor"
+import axios from 'axios'
 import { v4 as uuid } from 'uuid'
 import useSWR, { mutate } from "swr"
 import Fetcher from "../../lib/Fetcher"
@@ -59,15 +60,6 @@ const Layout = () => {
       refreshInterval: EightMinuteInMs,
       shouldRetryOnError: false
   })
-
-  // const friendsUiBlackList = [
-  //   "/app/friends",
-  //   "/app/chat",
-  //   "/app/audio-chat",
-  //   "/app/video-chat",
-  // ]
-
-  // const isBlackListed = friendsUiBlackList.some((path) => pathname === path)
 
   const onOffer = (payload: OnOfferInterface) => {
     setSdp(payload)
@@ -152,6 +144,7 @@ const Layout = () => {
   const logout = async () => {
     try {
       await HttpInterceptor.post("/auth/logout")
+      localStorage.removeItem("accessToken")
       navigate("/login")
     }
     catch (err) {
@@ -190,7 +183,7 @@ const Layout = () => {
           }
         }
         const { data } = await HttpInterceptor.post("/storage/upload", payload)
-        await HttpInterceptor.put(data.url, file, options)
+        await axios.put(data.url, file, options)
         const { data: user } = await HttpInterceptor.put("/auth/profile-picture", { path })
         setSession({ ...session, image: user.image })
         mutate('/auth/refresh-token')
@@ -230,9 +223,17 @@ const Layout = () => {
           <Link to="/app/friends">
             <IconButton icon="chat-ai-line" type="danger" />
           </Link>
-          <IconButton onClick={() => setLeftAsideSize(leftAsideSize === 250 ? collapsseSize : 250)} icon="menu-3-line" type="warning" />
+          <IconButton onClick={() => setLeftAsideSize(leftAsideSize > 0 ? 0 : 250)} icon="menu-3-line" type="warning" />
         </div>
       </nav >
+
+      {isMobile && leftAsideSize > 0 && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[19999] transition-opacity"
+          onClick={() => setLeftAsideSize(0)}
+        />
+      )}
+
       <aside
         className="bg-white fixed top-0 left-0 h-full lg:p-8 overflow-auto z-[20000] "
         style={{
@@ -265,7 +266,12 @@ const Layout = () => {
 
             {
               menus.map((item, index) => (
-                <Link key={index} to={item.href} className="flex items-center gap-4 text-gray-300 py-3 hover:text-white">
+                <Link
+                  key={index}
+                  to={item.href}
+                  onClick={() => isMobile && setLeftAsideSize(0)}
+                  className="flex items-center gap-4 text-gray-300 py-3 hover:text-white"
+                >
                   <i className={`${item.icon} text-xl`} title={item.label}></i>
                   <label className={`capitalize ${leftAsideSize === collapsseSize ? 'hidden' : ''}`}>{item.label}</label>
                 </Link>
@@ -285,7 +291,7 @@ const Layout = () => {
       </aside>
 
       <section
-        className="lg:py-8  lg:px-1  flex lg:flex-row flex-col gap-8 p-6"
+        className="lg:py-8  lg:px-1  flex lg:flex-row flex-col gap-8 p-4 md:p-6"
         style={{
           width: isMobile ? '100%' : `calc(100% - ${leftAsideSize}px)`,
           marginLeft: isMobile ? 0 : leftAsideSize,
@@ -293,11 +299,7 @@ const Layout = () => {
         }}
       >
 
-        {/* {
-          !isBlackListed &&
-          <FriendsRequest />
-        } */}
-        <div className="flex-1 lg:order-1 order-2">
+        <div className="flex-1 order-1">
           <Card
             title={
               <div className="flex gap-4 items-center">
@@ -319,12 +321,7 @@ const Layout = () => {
           </Card>
         </div>
 
-        {/* {
-          !isBlackListed &&
-          <FriendsSuggestion />
-        } */}
-
-        <aside className="bg-white lg:w-[400px] lg:pr-6 lg:order-2 order-1 flex flex-col gap-8">
+        <aside className="bg-white lg:w-[400px] lg:pr-6 order-2 flex flex-col gap-8">
           <FriendsRequest /> 
           <FriendsSuggestion />
           <FriendsOnline />
