@@ -102,6 +102,10 @@ const AudioChat = () => {
 
       rtc.current.onconnectionstatechange = () => {
         console.log("Audio RTC state:", rtc.current?.connectionState)
+        const state = rtc.current?.connectionState
+        if (state === "disconnected" || state === "failed" || state === "closed") {
+          onEndCallRemote()
+        }
       }
 
       rtc.current.ontrack = (e) => {
@@ -144,7 +148,7 @@ const AudioChat = () => {
         placement: 'bottomRight',
         onClose: stopAudio,
         actions: [
-          <button key="end" className="bg-rose-500 px-6 py-2 rounded font-medium text-white hover:bg-rose-600">End call</button>
+          <button key="end" className="bg-rose-500 px-6 py-2 rounded font-medium text-white hover:bg-rose-600" onClick={endCallOnLocal}>End call</button>
         ]
       })
 
@@ -152,7 +156,7 @@ const AudioChat = () => {
 
 
       setStatus('calling')
-      socket.emit("offer", { offer, to: id, from: session, type: 'audio' })
+      socket.emit("offer", { offer, to: id, socketId: liveActiveSession?.socketId, from: session, type: 'audio' })
     }
     catch (err) {
       CatchError(err)
@@ -173,10 +177,14 @@ const AudioChat = () => {
       const answer = await rtc.current.createAnswer()
       await rtc.current.setLocalDescription(answer)
 
+      if (remoteAudio.current) {
+        remoteAudio.current.play().catch(e => console.log("Accept user gesture audio play:", e))
+      }
+
       notify.destroy()
       setStatus('talking')
       stopAudio()
-      socket.emit("answer", { answer, to: id })
+      socket.emit("answer", { answer, to: id, socketId: payload.from?.socketId })
     }
     catch (err) {
       CatchError(err)
@@ -187,7 +195,7 @@ const AudioChat = () => {
     setStatus('end')
     playAudio("/sound/reject.mp3")
     notify.destroy()
-    socket.emit("end", { to: id })
+    socket.emit("end", { to: id, socketId: liveActiveSession?.socketId })
     endStreaming()
     setOpen(true)
   }
@@ -240,6 +248,10 @@ const AudioChat = () => {
     try {
       if (!rtc.current)
         return
+      if (rtc.current.signalingState !== "have-local-offer") {
+        console.warn("Skipping audio setRemoteDescription answer: state is", rtc.current.signalingState)
+        return
+      }
       const answer = new RTCSessionDescription(payload.answer)
       await rtc.current.setRemoteDescription(answer)
 
@@ -248,7 +260,7 @@ const AudioChat = () => {
       notify.destroy()
     }
     catch (err) {
-      CatchError(err)
+      console.warn("Error setting remote audio answer SDP:", err)
     }
   }
 
@@ -263,6 +275,11 @@ const AudioChat = () => {
     try {
       if (!rtc.current || !payload.candidate)
         return
+
+      if (!rtc.current.remoteDescription) {
+        console.warn("Remote description not set yet for audio candidate")
+        return
+      }
 
       const candidate = new RTCIceCandidate(payload.candidate)
       await rtc.current.addIceCandidate(candidate)
@@ -304,8 +321,8 @@ const AudioChat = () => {
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card title={session?.fullname}>
-          <audio hidden ref={localAudio} muted playsInline />
-          <audio hidden ref={remoteAudio} autoPlay playsInline />
+          <audio ref={localAudio} muted playsInline className="opacity-0 pointer-events-none fixed top-0 left-0 w-1 h-1" />
+          <audio ref={remoteAudio} autoPlay playsInline className="opacity-0 pointer-events-none fixed top-0 left-0 w-1 h-1" />
 
           <div className="flex flex-col items-center">
             < img

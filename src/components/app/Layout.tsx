@@ -18,7 +18,7 @@ import IconButton from "../shared/IconButton"
 import FriendsOnline from "./friend/FriendsOnline"
 import socket from "../../lib/socket"
 import { AudioSrcType, OnOfferInterface } from "./Video"
-import { notification } from "antd"
+import { notification, Modal, Button as AntButton } from "antd"
 
 const EightMinuteInMs = 8 * 60 * 1000
 
@@ -26,6 +26,7 @@ const Layout = () => {
   const isMobile = useMediaQuery({ query: '(max-width: 1224px)' })
   const [leftAsideSize, setLeftAsideSize] = useState(0)
   const [collapsseSize, setCollapseSize] = useState(0)
+  const [photoModalOpen, setPhotoModalOpen] = useState(false)
   const { liveActiveSession, setLiveActiveSession, setSdp } = useContext(Context)
   const { pathname } = useLocation()
   const params = useParams()
@@ -52,7 +53,7 @@ const Layout = () => {
       player.src = src
       player.loop = loop
       player.load()
-      player.play()
+      player.play().catch((err) => console.log("Audio play prevented:", err))
     }
 
   const navigate = useNavigate()
@@ -76,7 +77,7 @@ const Layout = () => {
   const startChat =(payload: any)=>{
     notify.destroy()
     setLiveActiveSession(payload.from)
-    navigate(`/app/chat/${payload.from.id}`)
+    navigate(`/app/chat/${payload.from?.id || payload.from?._id}`)
   }
 
   const onMessage =(payload: any)=>{
@@ -85,7 +86,7 @@ const Layout = () => {
 
     playAudio("/sound/chat.mp3")
      notify.open({
-      message: <h1 className="font-medium capitalize">{payload.from.fullname}</h1> ,
+      message: <h1 className="font-medium capitalize">{payload.from?.fullname || "Friend"}</h1> ,
       description: payload.message,
       placement: 'bottomRight',
       duration: 30,
@@ -159,6 +160,7 @@ const Layout = () => {
   }
 
   const uploadImage = () => {
+    setPhotoModalOpen(false)
     const input = document.createElement("input")
     input.type = "file"
     input.accept = "image/*"
@@ -191,6 +193,18 @@ const Layout = () => {
       catch (err) {
         console.log(err)
       }
+    }
+  }
+
+  const removeImage = async () => {
+    setPhotoModalOpen(false)
+    try {
+      const { data: user } = await HttpInterceptor.put("/auth/profile-picture", { path: null })
+      setSession({ ...session, image: user.image })
+      mutate('/auth/refresh-token')
+    }
+    catch (err) {
+      console.log(err)
     }
   }
 
@@ -255,7 +269,7 @@ const Layout = () => {
                     image={session.image || "/images/avtar.jpg"}
                     titleColor="white"
                     subtitleColor="#ddd"
-                    onClick={uploadImage}
+                    onClick={() => setPhotoModalOpen(true)}
                   />
 
                 }
@@ -328,6 +342,28 @@ const Layout = () => {
         </aside>
         {notifyUi}
       </section>
+
+      <Modal
+        open={photoModalOpen}
+        onCancel={() => setPhotoModalOpen(false)}
+        footer={null}
+        centered
+        title="Profile Photo Settings"
+      >
+        <div className="flex flex-col gap-3 pt-4">
+          <AntButton type="primary" size="large" onClick={uploadImage} icon={<i className="ri-upload-cloud-line" />}>
+            Upload New Photo
+          </AntButton>
+          {session?.image && (
+            <AntButton danger size="large" onClick={removeImage} icon={<i className="ri-delete-bin-line" />}>
+              Remove Profile Photo
+            </AntButton>
+          )}
+          <AntButton size="large" onClick={() => setPhotoModalOpen(false)}>
+            Cancel
+          </AntButton>
+        </div>
+      </Modal>
     </div>
   )
 }

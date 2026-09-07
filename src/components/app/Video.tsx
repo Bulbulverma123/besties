@@ -344,6 +344,10 @@ const Video = () => {
 
     rtc.current.onconnectionstatechange = () => {
       console.log("RTC State:", rtc.current?.connectionState)
+      const state = rtc.current?.connectionState
+      if (state === "disconnected" || state === "failed" || state === "closed") {
+        onEndCallRemote()
+      }
     }
 
     rtc.current.ontrack = (e) => {
@@ -400,7 +404,7 @@ const Video = () => {
         ]
       })
 
-      socket.emit("offer", { offer, to: id, from: session, type: 'video' })
+      socket.emit("offer", { offer, to: id, socketId: liveActiveSession?.socketId, from: session, type: 'video' })
     }
     catch (err) {
       CatchError(err)
@@ -415,6 +419,10 @@ const Video = () => {
       if (!rtc.current)
         return
 
+      if (rtc.current.signalingState !== "stable") {
+        console.warn("Signaling state before setting remote offer is:", rtc.current.signalingState)
+      }
+
       const offer = new RTCSessionDescription(payload.offer)
       await rtc.current.setRemoteDescription(offer)
 
@@ -424,7 +432,7 @@ const Video = () => {
       notify.destroy()
       setStatus("talking")
       stopAudio()
-      socket.emit("answer", { answer, to: id })
+      socket.emit("answer", { answer, to: id, socketId: payload.from?.socketId })
     }
     catch (err) {
       CatchError(err)
@@ -451,7 +459,7 @@ const Video = () => {
     setStatus("end")
     playAudio("/sound/reject.mp3")
     notify.destroy()
-    socket.emit("end", { to: id })
+    socket.emit("end", { to: id, socketId: liveActiveSession?.socketId })
     endStreaming()
     setOpen(true)
   }
@@ -485,14 +493,19 @@ const Video = () => {
   //connect both uers via webrtc
   const onCandidate = async (payload: OnCandidateInterface) => {
     try {
-      if (!rtc.current)
+      if (!rtc.current || !payload.candidate)
         return
+
+      if (!rtc.current.remoteDescription) {
+        console.warn("Remote description not set yet, ignoring candidate")
+        return
+      }
 
       const candidate = new RTCIceCandidate(payload.candidate)
       await rtc.current.addIceCandidate(candidate)
     }
     catch (err) {
-      CatchError(err)
+      console.warn("Candidate add error:", err)
     }
   }
 
@@ -500,6 +513,11 @@ const Video = () => {
     try {
       if (!rtc.current)
         return
+
+      if (rtc.current.signalingState !== "have-local-offer") {
+        console.warn("Skipping setRemoteDescription answer: state is", rtc.current.signalingState)
+        return
+      }
 
       const answer = new RTCSessionDescription(payload.answer)
       await rtc.current.setRemoteDescription(answer)
@@ -509,7 +527,7 @@ const Video = () => {
       notify.destroy()
     }
     catch (err) {
-      CatchError(err)
+      console.warn("Error setting remote answer SDP:", err)
     }
   }
 
