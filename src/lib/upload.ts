@@ -6,6 +6,17 @@ import HttpInterceptor from './HttpInterceptor'
  */
 export const uploadFileToStorage = async (file: File, path: string, status: string = 'public-read'): Promise<string> => {
   try {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("path", path)
+    formData.append("type", file.type)
+    formData.append("status", status)
+
+    const { data } = await HttpInterceptor.post('/storage/upload-direct', formData)
+    return data?.url || path
+  }
+  catch (err) {
+    console.warn("Direct backend upload failed, trying presigned URL...", err)
     const payload = {
       path,
       type: file.type,
@@ -19,18 +30,6 @@ export const uploadFileToStorage = async (file: File, path: string, status: stri
       }
     }
     await axios.put(data.url, file, options)
-    return path
-  }
-  catch (err) {
-    console.warn("S3 presigned PUT upload failed/CORS blocked. Falling back to backend direct upload route...", err)
-
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("path", path)
-    formData.append("type", file.type)
-    formData.append("status", status)
-
-    await HttpInterceptor.post('/storage/upload-direct', formData)
     return path
   }
 }

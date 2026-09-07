@@ -166,8 +166,8 @@ const Layout = () => {
       const path = `profile-pictures/${uuid()}.png`
 
       try {
-        await uploadFileToStorage(file, path, "public-read")
-        const { data: user } = await HttpInterceptor.put("/auth/profile-picture", { path })
+        const uploadedUrl = await uploadFileToStorage(file, path, "public-read")
+        const { data: user } = await HttpInterceptor.put("/auth/profile-picture", { path: uploadedUrl || path })
         setSession({ ...session, image: user.image })
         mutate('/auth/refresh-token')
       }
