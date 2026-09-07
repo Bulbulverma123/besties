@@ -1,4 +1,4 @@
-import { FC, ReactNode } from "react"
+import { FC, ReactNode, useEffect, useState } from "react"
 
 interface AvtarInterface {
     title?: string | null
@@ -12,13 +12,25 @@ interface AvtarInterface {
 }
 
 const Avtar: FC<AvtarInterface> = ({onClick, key=0, size="lg", title, subtitle ="Subtitle missing ", image ,titleColor="#000000", subtitleColor="#f5f5f5" }) =>{
-    const avatarSrc = image || "/images/avtar.jpg"
+    const [avatarSrc, setAvatarSrc] = useState<string>(image || "/images/avtar.jpg")
+
+    useEffect(() => {
+        setAvatarSrc(image || "/images/avtar.jpg")
+    }, [image])
+
+    const handleError = () => {
+        if (avatarSrc !== "/images/avtar.jpg") {
+            setAvatarSrc("/images/avtar.jpg")
+        }
+    }
+
     return (
        <div className="flex gap-3 items-center" key={key}>
             <div className="relative">
                 <img
                     onClick={onClick}
                     src={avatarSrc}
+                    onError={handleError}
                     className= {`${size === "lg"? "w-12 h-12" :"w-8 h-8"} rounded-full object-cover ${onClick ? 'cursor-pointer hover:opacity-90 transition' : ''}`}
                  />
                 {onClick && (
