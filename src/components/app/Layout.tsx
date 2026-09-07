@@ -62,9 +62,33 @@ const Layout = () => {
       shouldRetryOnError: false
   })
 
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (!audio.current) audio.current = new Audio()
+      audio.current.volume = 0
+      audio.current.src = "/sound/ring.mp3"
+      audio.current.play().then(() => {
+        if (audio.current) {
+          audio.current.pause()
+          audio.current.currentTime = 0
+          audio.current.volume = 1
+        }
+      }).catch(() => {})
+      window.removeEventListener("click", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
+    }
+    window.addEventListener("click", unlockAudio)
+    window.addEventListener("touchstart", unlockAudio)
+    return () => {
+      window.removeEventListener("click", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
+    }
+  }, [])
+
   const onOffer = (payload: OnOfferInterface) => {
     setSdp(payload)
     setLiveActiveSession(payload.from)
+    playAudio("/sound/ring.mp3", true)
 
     if(payload.type === "video")
      return navigate(`/app/video-chat/${payload.from.socketId}`)

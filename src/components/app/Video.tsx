@@ -89,6 +89,11 @@ const Video = () => {
 
   const toggleScreen = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        toast.info("Screen sharing is supported on Desktop PCs", { position: "top-center" })
+        return
+      }
+
       const localVideo = localVideoRef.current
 
       if (!localVideo)
@@ -148,104 +153,14 @@ const Video = () => {
       }
     }
 
-    catch (err) {
-      CatchError(err)
+    catch (err: any) {
+      if (err?.name === "NotSupportedError" || err?.message?.includes("getDisplayMedia")) {
+        toast.info("Screen sharing is supported on Desktop PCs", { position: "top-center" })
+      } else {
+        console.log("Screen share note:", err)
+      }
     }
   }
-
-  // const toggleScreen = async () => {
-  //   try {
-  //     const localVideo = localVideoRef.current
-
-  //     if (!localVideo)
-  //       return
-
-  //     if (!isScreenSharing)
-  //      {
-  //       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
-  //       const screenShareTrack = stream.getVideoTracks()[0]
-  //       const senderVideoTrack = rtc.current?.getSenders().find((s) => s.track?.kind === "video")
-
-  //       if (screenShareTrack && senderVideoTrack) {
-  //         await senderVideoTrack.replaceTrack(screenShareTrack)
-  //       }
-  //       localVideo.srcObject = stream
-  //       localStreamRef.current = stream
-  //       setIsScreenSharing(true)
-
-  //       //Detect screen sharing off
-  //       screenShareTrack.onended = async () => {
-  //         setIsScreenSharing(false)
-  //         const videoCamStream = await navigator.mediaDevices.getUserMedia({ video: true })
-  //         const videoTrack = videoCamStream.getVideoTracks()[0]
-  //         const senderTrack = rtc.current?.getSenders().find((s) => s.track?.kind === "video")
-  //         if (videoTrack && senderTrack)
-  //         {
-  //           await senderTrack.replaceTrack(videoTrack)
-  //         }
-
-  //         localVideo.srcObject = videoCamStream
-  //         localStreamRef.current = videoCamStream
-  //         setIsVideoSharing(true)
-  //       }
-
-  //     }
-  //     else {
-  //       const localStream = localStreamRef.current
-  //       if (!localStream)
-  //         return
-
-  //       localStream.getTracks().forEach((track) => {
-  //         track.stop()
-  //       })
-
-  //       localVideo.srcObject = null
-  //       localStreamRef.current = null
-  //       setIsScreenSharing(false)
-  //     }
-  //   }
-
-  //   catch (err) {
-  //     CatchError(err)
-  //   }
-  // }
-
-  // const toggleVideo = async () => {
-  //   try {
-  //     const localVideo = localVideoRef.current
-
-  //     if (!localVideo)
-  //       return
-
-  //     if (!isVideoSharing) {
-  //       const stream = await navigator.mediaDevices.getUserMedia({ video: true , audio: true})
-
-  //       localVideo.srcObject = stream
-  //       localStreamRef.current = stream
-  //       setIsVideoSharing(true)
-  //       setIsMic(true)
-  //     }
-  //     else {
-  //       const localStream = localStreamRef.current
-  //       if (!localStream)
-  //         return
-
-  //       localStream.getTracks().forEach((track) => {
-  //         track.stop()
-  //       })
-
-  //       localVideo.srcObject = null
-  //       localStreamRef.current = null
-  //       setIsVideoSharing(false)
-  //       setIsMic(false)
-  //     }
-
-  //   }
-  //   catch (err)
-  //   {
-  //     CatchError(err)
-  //   }
-  // }
 
   const toggleVideo = async () => {
   try {
@@ -274,21 +189,43 @@ const Video = () => {
   }
 }
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     try {
-      const localStream = localStreamRef.current
-      if (!localStream)
+      if (!localStreamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: isVideoSharing, audio: true })
+        localStreamRef.current = stream
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream
+        setIsMic(true)
         return
-
-      const audioTrack = localStream.getTracks().find((tracks) => tracks.kind === "audio")
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled
-        setIsMic(audioTrack.enabled)
       }
 
+      const audioTracks = localStreamRef.current.getAudioTracks()
+      if (audioTracks.length === 0) {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        const newTrack = audioStream.getAudioTracks()[0]
+        if (newTrack) {
+          localStreamRef.current.addTrack(newTrack)
+          rtc.current?.addTrack(newTrack, localStreamRef.current)
+          setIsMic(true)
+        }
+        return
+      }
+
+      const nextMicState = !isMic
+      audioTracks.forEach((track) => {
+        track.enabled = nextMicState
+      })
+      
+      rtc.current?.getSenders().forEach(sender => {
+        if (sender.track && sender.track.kind === "audio") {
+          sender.track.enabled = nextMicState
+        }
+      })
+
+      setIsMic(nextMicState)
     }
     catch (err) {
-      CatchError(err)
+      console.log("Mic toggle error:", err)
     }
   }
 
@@ -476,11 +413,13 @@ const Video = () => {
   //Event listeners
   const onOffer = (payload: OnOfferInterface) => {
     setStatus("incomming")
+    playAudio("/sound/ring.mp3", true)
     notify.open({
       message: <h1 className='capitalize font-medium'>{payload.from?.fullname || "Friend"}</h1>,
       description: "Incoming call...",
       duration: 30,
       placement: "bottomRight",
+      onClose: stopAudio,
       actions: [
         <div key="calls" className="space-x-4">
           <button className="bg-green-400 px-3 py-1 rounded text-white hover:bg-green-500" onClick={() => accept(payload)}>Accept</button>
