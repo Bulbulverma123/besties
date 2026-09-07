@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { Modal, notification } from "antd"
 import '@ant-design/v5-patch-for-react-19'
 import HttpInterceptor from "../../lib/HttpInterceptor"
+import { useMediaQuery } from 'react-responsive'
 
 export interface OnOfferInterface {
   offer: RTCSessionDescriptionInit
@@ -44,6 +45,7 @@ function getCallTiming(seconds: number): string {
 }
 
 const Video = () => {
+  const isMobileDevice = useMediaQuery({ query: '(max-width: 768px)' }) || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const { session, liveActiveSession , sdp, setSdp} = useContext(Context)
@@ -593,16 +595,20 @@ const Video = () => {
 
           </button>
 
-          <button onClick={toggleScreen}
-            className={`${isScreenSharing ? "bg-blue-500" : "bg-blue-300"} text-white w-12 h-12 rounded-full hover:bg-blue-400 hover:text-white`}
-          >
-            {
-              isScreenSharing ?
-                <i className="ri-tv-2-line"></i>
-                :
-                <i className="ri-chat-off-line"></i>
-            }
-          </button>
+          {!isMobileDevice && (
+            <button 
+              onClick={toggleScreen}
+              title="Share Screen"
+              className={`${isScreenSharing ? "bg-blue-500" : "bg-blue-300"} text-white w-12 h-12 rounded-full hover:bg-blue-400 hover:text-white hidden md:inline-flex items-center justify-center`}
+            >
+              {
+                isScreenSharing ?
+                  <i className="ri-tv-2-line"></i>
+                  :
+                  <i className="ri-computer-line"></i>
+              }
+            </button>
+          )}
 
         </div>
         <div className="space-x-4">
