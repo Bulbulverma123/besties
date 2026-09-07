@@ -84,7 +84,7 @@ const Video = () => {
     player.src = src
     player.loop = loop
     player.load()
-    player.play()
+    player.play().catch((err) => console.log("Audio play prevented:", err))
   }
 
   const toggleScreen = async () => {
@@ -314,16 +314,27 @@ const Video = () => {
   }
 
   const webRtcConnection = async () => {
-    const { data } = await HttpInterceptor.get("/twilio/turn-server")
-    rtc.current = new RTCPeerConnection({ iceServers: data })
+    let iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ]
+    try {
+      const { data } = await HttpInterceptor.get("/twilio/turn-server")
+      if (data && Array.isArray(data) && data.length > 0) {
+        iceServers = data
+      }
+    } catch (err) {
+      console.log("Using fallback ICE servers", err)
+    }
+
+    rtc.current = new RTCPeerConnection({ iceServers })
     const localStream = localStreamRef.current
 
-    if (!localStream)
-      return
-
-    localStream.getTracks().forEach((track) => {
-      rtc.current?.addTrack(track, localStream)
-    })
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        rtc.current?.addTrack(track, localStream)
+      })
+    }
 
     rtc.current.onicecandidate = (e) => {
       if (e.candidate) {
@@ -332,18 +343,18 @@ const Video = () => {
     }
 
     rtc.current.onconnectionstatechange = () => {
-      console.log(rtc.current?.connectionState)
+      console.log("RTC State:", rtc.current?.connectionState)
     }
 
     rtc.current.ontrack = (e) => {
       const remoteStream = e.streams[0]
       const remoteVideo = remoteVideoRef.current
 
-
       if (!remoteStream || !remoteVideo)
         return
 
       remoteVideo.srcObject = remoteStream
+      remoteVideo.play().catch((err) => console.log("Remote video play error:", err))
 
       const videoTracks = remoteStream.getVideoTracks()[0]
       if (videoTracks) {
@@ -361,7 +372,6 @@ const Video = () => {
           remoteVideo.style.display = "none"
         }
       }
-
     }
   }
 

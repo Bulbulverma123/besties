@@ -42,37 +42,8 @@ const AudioChat = () => {
     player.src = src
     player.loop = loop
     player.load()
-    player.play()
+    player.play().catch((err) => console.log("Audio autoplay prevented:", err))
   }
-
-  // const toggleMic = async () => {
-  //   try {
-  //     if (!localStream.current && !isMic) {
-  //       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  //       if (localAudio.current) {
-  //         localAudio.current.srcObject = stream
-  //         localAudio.current.play()
-  //       }
-
-  //       localStream.current = stream
-  //       setIsMic(true)
-  //     }
-  //     else {
-  //       localStream.current?.getTracks().forEach((track) => track.stop())
-
-  //       if (localAudio.current) {
-  //         localAudio.current.pause()
-  //         localAudio.current.srcObject = null
-  //       }
-
-  //       localStream.current = null
-  //       setIsMic(false)
-  //     }
-  //   }
-  //   catch (err) {
-  //     CatchError(err)
-  //   }
-  // }
 
   const toggleMic = async () => {
   try {
@@ -80,7 +51,7 @@ const AudioChat = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       if (localAudio.current) {
         localAudio.current.srcObject = stream
-        localAudio.current.play()
+        localAudio.current.play().catch(e => console.log("Local audio play err:", e))
       }
 
       localStream.current = stream
@@ -100,17 +71,28 @@ const AudioChat = () => {
 }
 
   const connection = async () => {
+    let iceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ]
     try {
       const { data } = await HttpInterceptor.get("/twilio/turn-server")
-      rtc.current = new RTCPeerConnection({ iceServers: data })
+      if (data && Array.isArray(data) && data.length > 0) {
+        iceServers = data
+      }
+    } catch (err) {
+      console.log("Using fallback ICE servers for audio call", err)
+    }
+
+    try {
+      rtc.current = new RTCPeerConnection({ iceServers })
       const localStreaming = localStream.current
 
-      if (!localStreaming)
-        return
-
-      localStreaming.getTracks().forEach((track) => {
-        rtc.current?.addTrack(track, localStreaming)
-      })
+      if (localStreaming) {
+        localStreaming.getTracks().forEach((track) => {
+          rtc.current?.addTrack(track, localStreaming)
+        })
+      }
 
       rtc.current.onicecandidate = (e) => {
         if (e.candidate) {
@@ -119,13 +101,14 @@ const AudioChat = () => {
       }
 
       rtc.current.onconnectionstatechange = () => {
-        console.log(rtc.current?.connectionState)
+        console.log("Audio RTC state:", rtc.current?.connectionState)
       }
 
       rtc.current.ontrack = (e) => {
         if (e && remoteAudio.current) {
           const remoteStream = e.streams[0]
           remoteAudio.current.srcObject = remoteStream
+          remoteAudio.current.play().catch(err => console.log("Remote audio play error:", err))
         }
       }
     }
@@ -286,7 +269,7 @@ const AudioChat = () => {
 
     }
     catch (err) {
-      CatchError(err)
+      console.warn("Audio candidate error:", err)
     }
   }
   useEffect(() => {
